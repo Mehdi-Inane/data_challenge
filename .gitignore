@@ -3,4 +3,7 @@ data/images_train.zip
 data/test/*
 data/train/*
 env/
-
+__pycache__/
+model_checkpoints/
+n_cut_loss.pkl
+reconstruction_loss.pkl

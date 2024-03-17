@@ -2,8 +2,8 @@ class Config():
     def __init__(self):
         self.debug = True
         self.input_size = 224 # Side length of square image patch
-        self.batch_size = 10
-        self.val_batch_size = 4
+        self.batch_size = 2
+        self.val_batch_size = 1
         self.test_batch_size = 1 
         self.verbose_testing = True
 

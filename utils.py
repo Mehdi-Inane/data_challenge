@@ -39,10 +39,10 @@ def save_progress_image(autoencoder, progress_images, epoch):
         segmentation = segmentations[i]
         pixels = torch.argmax(segmentation, axis=0).float() / config.k # to [0,1]
 
-        axes[0, i].imshow(progress_images[i].permute(1, 2, 0))
-        axes[1, i].imshow(pixels.detach().cpu())
-        axes[2, i].imshow(reconstructions[i].detach().cpu().permute(1, 2, 0))
+        axes[0].imshow(progress_images[i].permute(1, 2, 0))
+        axes[1].imshow(pixels.detach().cpu())
+        axes[2].imshow(reconstructions[i].detach().cpu().permute(1, 2, 0))
         if config.variationalTranslation:
-            axes[3, i].imshow(progress_expected[i].detach().cpu().permute(1, 2, 0))
+            axes[3].imshow(progress_expected[i].detach().cpu().permute(1, 2, 0))
     plt.savefig(os.path.join(config.segmentationProgressDir, str(epoch)+".png"))
     plt.close(f)
