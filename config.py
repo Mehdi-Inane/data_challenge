@@ -22,10 +22,11 @@ class Config():
         # The number of output channels is 2x in the encoder, x/2 in the decoder.
         self.encoderLayerSizes = [64, 128, 256, 512]
         self.decoderLayerSizes = [1024,512, 256]
-
+        self.resume = True
+        self.ckpt = 'model_checkpoints/WNET_30.pth'
         self.showSegmentationProgress = True
         self.segmentationProgressDir = './latent_images/'
-
+        self.resume_epoch = 30
         self.variationalTranslation = 0 # Pixels, 0 for off. 1 works fine
 
         self.saveModel = True

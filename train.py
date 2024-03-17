@@ -25,7 +25,8 @@ ncutloss_layer = NCutLoss2D()
 optimizerE = torch.optim.Adam(autoencoder.U_encoder.parameters(), lr=0.003)
 optimizerW = torch.optim.Adam(autoencoder.parameters(), lr=0.003)
 model_base_name = 'model_checkpoints/WNET_'
-
+if config.resume:
+        autoencoder = torch.load(config.ckpt).to('cuda')
 ###Training
 
 autoencoder.train()
@@ -76,7 +77,7 @@ for epoch in range(config.num_epochs):
         print(f"Epoch {epoch} loss: {epoch_loss:.6f}")
 
         if config.saveModel and (epoch % 5 == 0):
-            torch.save(autoencoder,f'{model_base_name + str(epoch)}.pth')
+            torch.save(autoencoder,f'{model_base_name + str(epoch + config.resume_epoch + 1)}.pth')
 
         with open('n_cut_loss.pkl','ab') as f:
           pickle.dump(ncutloss, f)
