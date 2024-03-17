@@ -2,3 +2,5 @@ data/images_test.zip
 data/images_train.zip
 data/test/*
 data/train/*
+env/
+

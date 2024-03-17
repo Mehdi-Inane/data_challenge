@@ -12,7 +12,7 @@ config = Config()
 
 #### Building datasets and dataloaders
 
-img_path = '/content/data/train/images'
+img_path = 'data/train/images'
 train_dataset = UnlabeledDataset('train',0.2,None,img_path,1)
 val_dataset = UnlabeledDataset('val',0.2,None,img_path,1)
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size,num_workers = 4, shuffle=True)
