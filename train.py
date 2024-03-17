@@ -15,8 +15,8 @@ config = Config()
 img_path = '/content/data/train/images'
 train_dataset = UnlabeledDataset('train',0.2,None,img_path,1)
 val_dataset = UnlabeledDataset('val',0.2,None,img_path,1)
-train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size,num_workers = 2, shuffle=True)
-val_dataloader   = torch.utils.data.DataLoader(val_dataset,   batch_size=4,num_workers = 2, shuffle=False)
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size,num_workers = 4, shuffle=True)
+val_dataloader   = torch.utils.data.DataLoader(val_dataset,   batch_size=4,num_workers = 4, shuffle=False)
 
 
 #### Model 
