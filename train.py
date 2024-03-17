@@ -21,7 +21,7 @@ val_dataloader   = torch.utils.data.DataLoader(val_dataset,   batch_size=4,num_w
 
 #### Model 
 autoencoder = WNet().to('cuda')
-ncutloss = NCutLoss2D()
+ncutloss_layer = NCutLoss2D()
 optimizerE = torch.optim.Adam(autoencoder.U_encoder.parameters(), lr=0.003)
 optimizerW = torch.optim.Adam(autoencoder.parameters(), lr=0.003)
 model_base_name = 'content/model_checkpoints/WNET_'
@@ -49,7 +49,7 @@ for epoch in range(config.num_epochs):
 
             optimizerE.zero_grad()
             segmentations = autoencoder.forward_encoder(inputs)
-            l_soft_n_cut  = ncutloss(segmentations, inputs)
+            l_soft_n_cut  = ncutloss_layer(segmentations, inputs)
             l_soft_n_cut.backward(retain_graph=False)
             optimizerE.step()
             ncutloss.append(l_soft_n_cut)
@@ -75,7 +75,7 @@ for epoch in range(config.num_epochs):
         epoch_loss = running_loss / len(train_dataloader.dataset)
         print(f"Epoch {epoch} loss: {epoch_loss:.6f}")
 
-        if config.saveModel:
+        if config.saveModel and (epoch % 5 == 0):
             torch.save(f'{model_base_name + str(epoch)}.pth')
 
         with open('n_cut_loss.pkl','ab') as f:
