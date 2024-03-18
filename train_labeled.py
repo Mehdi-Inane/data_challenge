@@ -4,7 +4,7 @@ from utils import *
 import torch
 from model import *
 from loss_labeled import *
-
+from loss import *
 from meanshift import *
 
 img_path = 'data/train/images'
@@ -21,24 +21,34 @@ if config.resume:
         autoencoder = torch.load(config.ckpt).to('cuda')
 ###Training
 optimizerE = torch.optim.Adam(autoencoder.U_encoder.parameters(), lr=0.003)
+optimizerW = torch.optim.Adam(autoencoder.parameters(), lr=0.003)
 meanshift = MeanShiftCluster()
 autoencoder.train()
 criterion = GlobalLoss().to('cuda')
+ncutloss_layer = NCutLoss2D()
+progress_images, progress_expected = next(iter(val_dataloader))
 for epoch in range(config.num_epochs):
     autoencoder.train()
     running_loss = 0
+    i = 0
     for image,ground_truth in train_dataloader:
         if torch.cuda.is_available():
             image  = image.cuda()
             ground_truth = ground_truth.cuda()
         optimizerE.zero_grad()
         segmentations = autoencoder.forward_encoder(image)
-        print(segmentations.shape)
-        segmentations = gumbel_softmax(segmentations)
-        loss = criterion(segmentations,ground_truth)
-        loss.backward()
+        l_soft_n_cut  = ncutloss_layer(segmentations, image)
+        l_soft_n_cut.backward(retain_graph=False)
         optimizerE.step()
-        running_loss += loss
+        optimizerW.zero_grad()
+        segmentations, reconstructions = autoencoder.forward(image)
+        loss = criterion(reconstructions,ground_truth)
+        loss.backward()
+        optimizerW.step()
+        running_loss += (loss + l_soft_n_cut)
+        if config.showSegmentationProgress and i == 0: # If first batch in epoch
+            save_progress_image(autoencoder, progress_images, epoch)
+        i +=1
     running_loss = running_loss / len(train_dataloader)
     print('Training loss: ',running_loss)
     # Computing validation loss
@@ -49,9 +59,10 @@ for epoch in range(config.num_epochs):
                 image  = image.cuda()
                 ground_truth = ground_truth.cuda()
             segmentations = autoencoder.forward_encoder(image)
-            segmentations = gumbel_softmax(segmentations)
-            loss = criterion(segmentations,ground_truth)
-            val_run_loss += loss
+            l_soft_n_cut  = ncutloss_layer(segmentations, image)
+            segmentations, reconstructions = autoencoder.forward(image)
+            loss = criterion(reconstructions,ground_truth)
+            val_run_loss += (loss + l_soft_n_cut)
         val_run_loss = val_run_loss / len(val_dataloader)
         print('Validation Error: ',val_run_loss)
     # Computing Rand Index on test set

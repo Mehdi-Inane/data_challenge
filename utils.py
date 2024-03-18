@@ -13,21 +13,13 @@ def compute_metric(model,meanshift,data_loader,device):
   with torch.no_grad():
     for batch in (data_loader):
       for (real_image,labeled_image) in zip(*batch):
-        predict_logits = model.forward_encoder(real_image.to(device))
-        segmentations = gumbel_softmax(predict_logits)
-        clustered_preds = meanshift(segmentations).flatten().cpu()
+        segmentations,predict_logits = model.forward(real_image.to(device))
+        clustered_preds = meanshift(predict_logits).flatten().cpu()
         labels_flat = labeled_image.flatten().cpu()
         score = sklearn.metrics.adjusted_rand_score(clustered_preds,labels_flat)
         scores.append(score)
   return np.mean(scores)
 
-def gumbel_softmax(logits, temperature=1.0):
-    k = logits.shape[1]
-    channel_indices = torch.arange(k).view(1, k, 1, 1).to(logits.device)
-    gumbel_noise = -torch.log(-torch.log(torch.rand_like(logits)))
-    soft_samples = F.softmax((logits + gumbel_noise) / temperature, dim=1)
-    single_channel_output_gumbel = torch.sum(soft_samples * channel_indices, dim=1)
-    return soft_samples
 
 def clear_progress_dir(): # Or make the dir if it does not exist
     if not os.path.isdir(config.segmentationProgressDir):
