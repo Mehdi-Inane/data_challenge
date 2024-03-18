@@ -2,6 +2,8 @@ data/images_test.zip
 data/images_train.zip
 data/test/*
 data/train/*
+data/data/*
+data/labels.csv
 env/
 __pycache__/
 model_checkpoints/
