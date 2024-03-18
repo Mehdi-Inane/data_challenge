@@ -174,3 +174,15 @@ class WNet(nn.Module):
         segmentations = self.forward_encoder(x)
         x_prime       = self.forward_decoder(segmentations)
         return segmentations, x_prime
+
+class Stack_Encoder(nn.Module):
+
+    def __init__(self,encoder):
+        super(Stack_Encoder,self).__init__()
+        self.encoder = encoder
+        self.conv1x1 = nn.Conv2d(64, 1, kernel_size=1, stride=1, padding=0)
+    
+    def forward(self,x):
+        x = self.encoder(x)
+        x = self.conv1x1(x)
+        return x
