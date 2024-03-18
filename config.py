@@ -8,7 +8,7 @@ class Config():
         self.verbose_testing = True
 
         self.k = 64 # Number of classes
-        self.num_epochs = 32 #250 for real
+        self.num_epochs = 60 #250 for real
         self.data_dir = "content/data/train/images" # Directory of images
         self.showdata = False # Debug the data augmentation by showing the data we're training on.
 

@@ -161,7 +161,7 @@ class RegularizationLoss(nn.Module):
         if loss.max() > 0:
             return loss[loss > 0].mean()
         else:
-            return None
+            return torch.Tensor([0]).mean()
 
 
 class GlobalLoss(nn.Module):

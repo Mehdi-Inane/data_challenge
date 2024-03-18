@@ -16,12 +16,14 @@ val_dataloader   = torch.utils.data.DataLoader(val_dataset,   batch_size=4,num_w
 test_dataloader = torch.utils.data.DataLoader(test_dataset,   batch_size=4,num_workers = 4, shuffle=False)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 autoencoder = WNet().to('cuda')
+autoencoder = torch.nn.DataParallel(autoencoder)
 model_base_name = 'model_checkpoints/WNET_supervised_'
 if config.resume:
         autoencoder = torch.load(config.ckpt).to('cuda')
+        autoencoder = torch.nn.DataParallel(autoencoder)
 ###Training
-optimizerE = torch.optim.Adam(autoencoder.U_encoder.parameters(), lr=0.003)
-optimizerW = torch.optim.Adam(autoencoder.parameters(), lr=0.003)
+optimizerE = torch.optim.Adam(autoencoder.module.U_encoder.parameters(), lr=0.003)
+optimizerW = torch.optim.Adam(autoencoder.module.parameters(), lr=0.003)
 meanshift = MeanShiftCluster()
 autoencoder.train()
 criterion = GlobalLoss().to('cuda')
@@ -36,7 +38,7 @@ for epoch in range(config.num_epochs):
             image  = image.cuda()
             ground_truth = ground_truth.cuda()
         optimizerE.zero_grad()
-        segmentations = autoencoder.forward_encoder(image)
+        segmentations = autoencoder.module.forward_encoder(image)
         l_soft_n_cut  = ncutloss_layer(segmentations, image)
         l_soft_n_cut.backward(retain_graph=False)
         optimizerE.step()
@@ -45,6 +47,12 @@ for epoch in range(config.num_epochs):
         loss = criterion(reconstructions,ground_truth)
         loss.backward()
         optimizerW.step()
+        if not loss :
+            loss = 0
+        if not l_soft_n_cut:
+            l_soft_n_cut = 0
+        if loss.shape != l_soft_n_cut.shape:
+            loss = loss.squeeze(0)
         running_loss += (loss + l_soft_n_cut)
         if config.showSegmentationProgress and i == 0: # If first batch in epoch
             save_progress_image(autoencoder, progress_images, epoch)
@@ -52,16 +60,18 @@ for epoch in range(config.num_epochs):
     running_loss = running_loss / len(train_dataloader)
     print('Training loss: ',running_loss)
     # Computing validation loss
-    with torch.no_grad:
+    with torch.no_grad():
         val_run_loss = 0
         for image, ground_truth in val_dataloader:
             if torch.cuda.is_available():
                 image  = image.cuda()
                 ground_truth = ground_truth.cuda()
-            segmentations = autoencoder.forward_encoder(image)
+            segmentations = autoencoder.module.forward_encoder(image)
             l_soft_n_cut  = ncutloss_layer(segmentations, image)
             segmentations, reconstructions = autoencoder.forward(image)
             loss = criterion(reconstructions,ground_truth)
+            if loss.shape != l_soft_n_cut.shape:
+                loss = loss.squeeze(0)
             val_run_loss += (loss + l_soft_n_cut)
         val_run_loss = val_run_loss / len(val_dataloader)
         print('Validation Error: ',val_run_loss)
@@ -69,7 +79,7 @@ for epoch in range(config.num_epochs):
     if epoch % 5 == 0:
         torch.save(autoencoder,f'{model_base_name + str(epoch + config.resume_epoch + 1)}.pth')
         # Computing rand index
-        rand_index = compute_metric(autoencoder) 
+        rand_index = compute_metric(autoencoder,meanshift,test_dataloader,device) 
         print(f'Rand index in epoch {epoch}: {rand_index}')
               
               
