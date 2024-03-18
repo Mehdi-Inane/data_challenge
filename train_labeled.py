@@ -33,6 +33,7 @@ for epoch in range(config.num_epochs):
             ground_truth = ground_truth.cuda()
         optimizerE.zero_grad()
         segmentations = autoencoder.forward_encoder(image)
+        print(segmentations.shape)
         segmentations = gumbel_softmax(segmentations)
         loss = criterion(segmentations,ground_truth)
         loss.backward()
