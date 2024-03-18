@@ -21,10 +21,10 @@ model_base_name = 'model_checkpoints/Stacked_WNET_supervised_'
 if config.resume:
         autoencoder = torch.load(config.ckpt).to('cuda')
         encoder = autoencoder.U_encoder
-        autoencoder = Stack_Encoder(encoder)
+        autoencoder = Stack_Encoder(encoder).to('cuda')
         autoencoder = torch.nn.DataParallel(autoencoder)
 ###Training
-optimizerE = torch.optim.Adam(autoencoder.module.U_encoder.parameters(), lr=0.003)
+optimizerE = torch.optim.Adam(autoencoder.module.parameters(), lr=0.003)
 meanshift = MeanShiftCluster()
 autoencoder.train()
 criterion = GlobalLoss().to('cuda')
@@ -52,6 +52,8 @@ for epoch in range(config.num_epochs):
                 image  = image.cuda()
                 ground_truth = ground_truth.cuda()
             segmentations = autoencoder.forward(image)
+            loss = criterion(segmentations,ground_truth)
+            val_run_loss += loss
         val_run_loss = val_run_loss / len(val_dataloader)
         print('Validation Error: ',val_run_loss)
     # Computing Rand Index on test set

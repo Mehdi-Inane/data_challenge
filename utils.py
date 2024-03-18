@@ -12,7 +12,7 @@ def compute_metric(model,meanshift,data_loader,device):
   model.eval()  # Set the model to evaluation mode
   with torch.no_grad():
     for (real_image,labeled_image) in data_loader:
-      segmentations,predict_logits = model.forward(real_image.to(device))
+      predict_logits = model.forward(real_image.to(device))
       clustered_preds = meanshift(predict_logits).flatten().cpu()
       labels_flat = labeled_image.flatten().cpu()
       score = sklearn.metrics.adjusted_rand_score(clustered_preds,labels_flat)
